@@ -99,6 +99,26 @@ Returns the CIEDE2000 perceptual distance between two colors.
 
 ---
 
+## CLI Usage (Build Steps & Auditing)
+
+Run `cm-colors` directly via `npx` in your npm scripts or terminal:
+
+```bash
+# Fix a single color pair:
+npx cm-colors fix "#3b82f6" "#ffffff"
+
+# Check WCAG contrast ratio without modifying:
+npx cm-colors contrast "#777777" "#ffffff" --json
+
+# Audit & auto-fix an entire CSS file in your build step:
+npx cm-colors fix src/styles.css -o dist/styles.css
+
+# Fix CSS variables and rules in place:
+npx cm-colors fix styles.css --write
+```
+
+---
+
 ## Authors & License
 
 * Authored by [Lalitha A R](https://isrl.in/) ([comfort-mode-toolkit](https://github.com/comfort-mode-toolkit))
