@@ -41,7 +41,11 @@
     "color-tuning",
     "readability"
   ],
-  "author": "Lalitha A R <https://isrl.in/>",
+  "author": {
+    "name": "Lalitha A R",
+    "email": "lalithaar_npmalt.cold549@passinbox.com",
+    "url": "https://isrl.in/"
+  },
   "license": "GPL-3.0",
   "repository": {
     "type": "git",
