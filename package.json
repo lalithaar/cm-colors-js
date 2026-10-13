@@ -1,0 +1,50 @@
+{
+  "name": "cm-colors",
+  "version": "1.0.0",
+  "description": "Accessible Color Science Library. Automatically fix and tune colors to meet WCAG guidelines with minimal perceptual difference (CIEDE2000 & OKLCH).",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "browser": "dist/cm-colors.global.js",
+  "unpkg": "dist/cm-colors.global.js",
+  "jsdelivr": "dist/cm-colors.global.js",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "index.d.ts"
+  ],
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node test.mjs"
+  },
+  "keywords": [
+    "color",
+    "accessibility",
+    "a11y",
+    "wcag",
+    "contrast",
+    "ciede2000",
+    "oklch",
+    "oklab",
+    "color-tuning",
+    "readability"
+  ],
+  "author": "Lalitha A R <https://isrl.in/>",
+  "license": "GPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/comfort-mode-toolkit/cm-colors.git"
+  },
+  "bugs": {
+    "url": "https://github.com/comfort-mode-toolkit/cm-colors/issues"
+  },
+  "homepage": "https://github.com/comfort-mode-toolkit/cm-colors#readme"
+}

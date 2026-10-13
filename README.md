@@ -1,107 +1,105 @@
-# CM-Colors 🎨✨
+# cm-colors (JavaScript / TypeScript)
 
-[![Python Tests](https://github.com/comfort-mode-toolkit/cm-colors/actions/workflows/python-test.yml/badge.svg)](https://github.com/comfort-mode-toolkit/cm-colors/actions/workflows/python-test.yml)
-![PyPI - Version](https://img.shields.io/pypi/v/cm-colors)
-[![PyPI Downloads](https://static.pepy.tech/personalized-badge/cm-colors?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/cm-colors)![License](https://img.shields.io/github/license/comfort-mode-toolkit/cm-colors)
+> **Accessible Color Science Library.** Automatically fix and tune colors to meet WCAG guidelines with minimal perceptual difference, powered by OKLCH color spaces and CIEDE2000 metrics.
 
-**Color contrast that works for everyone**
+Official JavaScript/TypeScript port of the Python [`cm-colors`](https://pypi.org/project/cm-colors/) library.
 
-CM-Colors automatically fixes your colors so they are easy to read. It finds similar colors that work for everyone, so you don't have to guess.
-
-> "Fortunately, there's a tool that's just come out that's going to change your life: CM-Colors. You give it your colors, and it automatically adjusts them so they're accessible, all while changing the shades as little as possible to keep your design intact."
->
-> — [Korben.info](https://korben.info/cm-colors-accessibilite-contraste-couleurs-wcag.html)
-
-
-The percentage shows how much easier the text is to read:
-
-<img width="1189" height="1110" alt="an image showing side by side comparision of before and after change of colors" src="https://github.com/user-attachments/assets/4ce92c65-cd27-4bae-8756-bbbe9bf70a91"  />
-
-## Overview
-
-Spending too much time adjusting colors? CM-Colors handles it for you. It automatically finds colors that look like your brand but are readable for all your visitors.
-
-**What it does:**
-
-- **Fixes colors automatically**: No more manual tweaking.
-- **Works everywhere**: Fix Python code or CSS files.
-- **Keeps your style**: Changes colors as little as possible.
-- **Saves you time**: Fix your whole project in seconds.
-
-## Installation
-
-```bash
-pip install cm-colors
-```
-
-## Quick Start
-
-### Fix a single color
-
-```python
-from cm_colors import ColorPair
-
-# Your colors
-pair = ColorPair("#999999", "#ffffff")
-
-# Fix them and preview in the terminal
-fixed_color, success = pair.make_readable(show=True)
-
-print(f"Use {fixed_color} instead of #999999")
-# Output: Use #8e8e8e instead of #999999
-```
-
-### Fix many colors at once
-
-```python
-from cm_colors import make_readable_bulk
-
-my_colors = [
-    ("#777", "#fff"),
-    ("#888", "#000"),
-]
-
-results = make_readable_bulk(my_colors)
-
-for color, status in results:
-    print(f"{color} is {status}")
-```
-
-### Check and fix from the terminal
-
-```bash
-# check a pair
-cm-colors contrast '#777777' '#ffffff' --json
-
-# fix a pair
-cm-colors fix '#777777' '#ffffff' --json
-
-# fix a CSS file
-cm-colors fix styles.css
-```
-
-`cm-colors fix styles.css` creates `styles_cm.css` with readable colors so you can preview before touching your original.
-
-## Documentation
-
-For more details, see the [full documentation](https://cm-colors.readthedocs.io/en/latest/).
-
-## Research
-
-The optimization algorithm is described in two peer-reviewed papers:
-
-- **[Context-Adaptive Color Optimization for Web Accessibility](https://arxiv.org/abs/2512.07623)** (arXiv:2512.07623) — context-adaptive constraint strategies achieving 93.68% success across random color pairs and 100% on pairs with initial contrast ratio > 2.0, tested on 10,000 programmatically generated branding-representative pairs.
-
-- **[Perceptually-Minimal Color Optimization for Web Accessibility](https://arxiv.org/abs/2512.05067)** (arXiv:2512.05067) — the multi-phase OKLCH optimization approach that minimizes perceptual change (CIEDE2000) while meeting WCAG contrast requirements.
-
-## License
-
-GNU General Public License v3.0
-
-## Support
-
-Found a problem? [Let us know](https://github.com/comfort-mode-toolkit/cm-colors/issues).
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+[![Zero Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen.svg)](#)
 
 ---
 
-**Stop guessing, start building.**
+## Features
+
+* **Zero Dependencies**: Lightweight, self-contained mathematical color science.
+* **Minimal Perceptual Change**: Uses **CIEDE2000** ($\Delta E_{00}$) to preserve brand identity while satisfying contrast.
+* **OKLCH Optimization**: Navigates modern perceptual color spaces (OKLCH) via binary search and gradient descent.
+* **Universal**: Runs in Node.js (ESM + CommonJS) and directly in browsers via CDN.
+* **Fully Typed**: Shipped with complete TypeScript definitions (`index.d.ts`).
+
+---
+
+## Installation
+
+### Via NPM
+```bash
+npm install cm-colors
+```
+
+### Via CDN (Browser Script)
+```html
+<script src="https://cdn.jsdelivr.net/npm/cm-colors/dist/cm-colors.global.js"></script>
+```
+
+---
+
+## Quickstart
+
+### ES Modules
+```javascript
+import { makeReadable, getContrast, getWcagLevel } from "cm-colors";
+
+// Check and automatically fix contrast:
+const result = makeReadable("#3b82f6", "#ffffff");
+console.log(result);
+// {
+//   color: "#2b72e5",
+//   originalContrast: 3.68,
+//   finalContrast: 4.52,
+//   deltaE: 5.92,
+//   wcagLevel: "AA",
+//   isReadable: true
+// }
+```
+
+### CommonJS
+```javascript
+const { makeReadable, getContrast } = require("cm-colors");
+
+const contrast = getContrast("#3b82f6", "#ffffff"); // 3.68
+```
+
+### Class-based API (Python Parity)
+```javascript
+import { ColorPair } from "cm-colors";
+
+const pair = new ColorPair("#777777", "#ffffff");
+console.log(pair.contrast);   // 4.48
+console.log(pair.wcagLevel);  // "FAIL"
+console.log(pair.isReadable); // "not readable"
+
+const [tunedColor, success] = pair.makeReadable();
+console.log(tunedColor);      // "#757575"
+console.log(success);         // true
+```
+
+---
+
+## API Reference
+
+### `makeReadable(textColor, bgColor, options?)`
+Automatically tunes `textColor` against `bgColor` to achieve target WCAG contrast with the smallest $\Delta E_{00}$ change.
+
+**Options**:
+* `large` *(boolean, default: false)*: Treat as large text (WCAG 3.0:1 threshold).
+* `mode` *(number, default: 1)*:
+  * `0`: Strict mode.
+  * `1`: Default (Recursive). Best success rate for general web UI.
+  * `2`: Relaxed mode with extended tolerance.
+* `veryReadable` *(boolean, default: false)*: Target WCAG AAA compliance (7.0:1) instead of AA.
+
+### `getContrast(textColor, bgColor)`
+Returns the WCAG contrast ratio between two colors (e.g., `4.52`).
+
+### `getWcagLevel(textColor, bgColor, large?)`
+Returns `"AAA"`, `"AA"`, or `"FAIL"`.
+
+### `deltaE(color1, color2)`
+Returns the CIEDE2000 perceptual distance between two colors.
+
+---
+
+## Authors & License
+
+* Authored by [Lalitha A R](https://isrl.in/) ([comfort-mode-toolkit](https://github.com/comfort-mode-toolkit))
+* Licensed under GNU General Public License v3.0 (GPL-3.0).
