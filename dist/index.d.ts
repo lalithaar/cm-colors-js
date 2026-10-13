@@ -87,8 +87,14 @@ export function makeReadable(
   bgColor: ColorInput,
   options?: MakeReadableOptions
 ): {
+  color: ColorInput | null;
   fixedColor: ColorInput | null;
+  tunedColor: ColorInput | null;
   success: boolean;
+  originalContrast: number;
+  finalContrast: number;
+  deltaE: number;
+  wcagLevel: WCAGLevel;
   isReadable: ReadabilityStatus;
   pair: ColorPair;
 };

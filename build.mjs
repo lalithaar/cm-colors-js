@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import { build } from 'esbuild';
 
 const banner = `/*!
- * cm-colors v1.1.0 (JS/TS Port)
+ * cm-colors v1.1.1 (JS/TS Port)
  * Accessible Color Science Library
  * Authored by Lalitha A R (https://isrl.in/)
  * Licensed under GPL-3.0

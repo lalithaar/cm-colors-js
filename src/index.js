@@ -101,8 +101,8 @@ import {
   _get_level_badge
 } from "./visualiser.js";
 
-export const version = "1.1.0";
-export const __version__ = "1.1.0";
+export const version = "1.1.1";
+export const __version__ = "1.1.1";
 
 // Re-exports
 export {
@@ -194,12 +194,30 @@ export {
  * Top-level convenience function: fix a single color pair to make it readable.
  */
 export function makeReadable(textColor, bgColor, options = {}) {
-  const large = options.large || false;
+  const large = Boolean(options.large);
   const pair = new ColorPair(textColor, bgColor, large);
   const [fixedColor, success] = pair.makeReadable(options);
+  const originalContrast = calculateContrastRatio(textColor, bgColor);
+  const finalContrast = fixedColor ? calculateContrastRatio(fixedColor, bgColor) : originalContrast;
+  let deltaEVal = 0.0;
+  if (fixedColor && pair.text.isValid) {
+    try {
+      const cFixed = new Color(fixedColor);
+      if (cFixed.isValid) {
+        deltaEVal = calculateDeltaE2000(pair.text.rgb, cFixed.rgb);
+      }
+    } catch {}
+  }
+
   return {
+    color: fixedColor,
     fixedColor,
+    tunedColor: fixedColor,
     success,
+    originalContrast: Math.round(originalContrast * 100) / 100,
+    finalContrast: Math.round(finalContrast * 100) / 100,
+    deltaE: Math.round(deltaEVal * 100) / 100,
+    wcagLevel: getWcagLevel(fixedColor || textColor, bgColor, large),
     isReadable: pair.isReadable,
     pair
   };
