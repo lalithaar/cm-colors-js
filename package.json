@@ -1,6 +1,6 @@
 {
   "name": "cm-colors",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Accessible Color Science Library. Automatically fix and tune colors to meet WCAG guidelines with minimal perceptual difference (CIEDE2000 & OKLCH). Full parity with PyPI cm-colors.",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
