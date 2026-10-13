@@ -1,12 +1,14 @@
 /**
  * CM-Colors JS - WCAG Contrast Calculations
+ * Complete 100% parity with Python cm_colors.core.contrast.
  */
 
-import { srgbToLinear, parseColor } from "./conversions.js";
+import { srgbToLinear } from "./conversions.js";
+import { parseColorToRgb } from "./colorParser.js";
 
 export function calculateRelativeLuminance(rgb) {
-  const c = Array.isArray(rgb) ? rgb : parseColor(rgb);
-  const [r, g, b] = c.map(x => x / 255.0);
+  const c = Array.isArray(rgb) ? rgb : parseColorToRgb(rgb);
+  const [r, g, b] = [c[0] / 255.0, c[1] / 255.0, c[2] / 255.0];
   const rLinear = srgbToLinear(r);
   const gLinear = srgbToLinear(g);
   const bLinear = srgbToLinear(b);
@@ -14,8 +16,8 @@ export function calculateRelativeLuminance(rgb) {
 }
 
 export function calculateContrastRatio(textRgb, bgRgb) {
-  const tRgb = Array.isArray(textRgb) ? textRgb : parseColor(textRgb);
-  const bRgb = Array.isArray(bgRgb) ? bgRgb : parseColor(bgRgb);
+  const tRgb = Array.isArray(textRgb) ? textRgb : parseColorToRgb(textRgb);
+  const bRgb = Array.isArray(bgRgb) ? bgRgb : parseColorToRgb(bgRgb);
   const textLuminance = calculateRelativeLuminance(tRgb);
   const bgLuminance = calculateRelativeLuminance(bRgb);
 
@@ -41,3 +43,9 @@ export function getWcagLevel(textRgb, bgRgb, large = false) {
   const ratio = calculateContrastRatio(textRgb, bgRgb);
   return getContrastLevel(ratio, large);
 }
+
+// Snake-case aliases
+export const calculate_relative_luminance = calculateRelativeLuminance;
+export const calculate_contrast_ratio = calculateContrastRatio;
+export const get_contrast_level = getContrastLevel;
+export const get_wcag_level = getWcagLevel;

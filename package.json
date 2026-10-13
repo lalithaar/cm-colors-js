@@ -1,7 +1,7 @@
 {
   "name": "cm-colors",
-  "version": "1.0.0",
-  "description": "Accessible Color Science Library. Automatically fix and tune colors to meet WCAG guidelines with minimal perceptual difference (CIEDE2000 & OKLCH).",
+  "version": "1.1.0",
+  "description": "Accessible Color Science Library. Automatically fix and tune colors to meet WCAG guidelines with minimal perceptual difference (CIEDE2000 & OKLCH). Full parity with PyPI cm-colors.",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -9,6 +9,9 @@
   "unpkg": "dist/cm-colors.global.js",
   "jsdelivr": "dist/cm-colors.global.js",
   "type": "module",
+  "bin": {
+    "cm-colors": "bin/cm-colors.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -19,6 +22,7 @@
   "files": [
     "dist",
     "src",
+    "bin",
     "index.d.ts"
   ],
   "scripts": {
@@ -46,5 +50,8 @@
   "bugs": {
     "url": "https://github.com/comfort-mode-toolkit/cm-colors/issues"
   },
-  "homepage": "https://github.com/comfort-mode-toolkit/cm-colors#readme"
+  "homepage": "https://github.com/comfort-mode-toolkit/cm-colors#readme",
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  }
 }

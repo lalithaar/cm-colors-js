@@ -1,168 +1,251 @@
 /**
- * CM-Colors JS
- * Accessible Color Science Library ported from the Python cm-colors toolkit.
- * Automatically fix colors to be readable with minimal visual change using OKLCH and CIEDE2000.
+ * CM-Colors JS (v1.1.0)
+ * Accessible Color Science Library ported from Python cm-colors.
+ * Automatically fix colors to be WCAG readable with minimal visual change.
+ * 100% full parity with PyPI cm-colors 1.1.0.
  *
- * Authored by Lalitha A R (https://isrl.in/)
- * Licensed under GPL-3.0
+ * @license GPL-3.0
+ * @author Lalitha A R <https://isrl.in/>
  */
 
+import { Color, ColorPair } from "./colors.js";
+import { makeReadableBulk, make_readable_bulk } from "./cmColors.js";
+import { CSS_NAMED_COLORS } from "./namedColors.js";
 import {
-  parseColor,
-  hexToRgb,
-  rgbToHex,
-  rgbToOklch,
-  oklchToRgb,
-  rgbToLab,
-  calculateHueAngle,
+  parseColorToRgb,
+  parse_color_to_rgb,
+  detectColorFormat,
+  detect_color_format,
+  formatColor,
+  format_color
+} from "./colorParser.js";
+import {
   srgbToLinear,
-  linearToSrgb
+  srgb_to_linear,
+  linearToSrgb,
+  linear_to_srgb,
+  rgbToLinear,
+  rgb_to_linear,
+  hexToRgb,
+  hex_to_rgb,
+  rgbToHex,
+  rgb_to_hex,
+  rgbToOklch,
+  rgb_to_oklch,
+  oklchToRgb,
+  oklch_to_rgb,
+  rgbToOklchSafe,
+  rgb_to_oklch_safe,
+  oklchToRgbSafe,
+  oklch_to_rgb_safe,
+  isValidRgb,
+  is_valid_rgb,
+  isValidOklch,
+  is_valid_oklch,
+  calculateHueAngle,
+  calculate_hue_angle,
+  rgbToXyz,
+  rgb_to_xyz,
+  xyzToLab,
+  xyz_to_lab,
+  rgbToLab,
+  rgb_to_lab,
+  rgbaToRgb,
+  rgba_to_rgb,
+  rgbintToString,
+  rgbint_to_string,
+  rgbToHsl,
+  rgb_to_hsl,
+  hslToRgb,
+  hsl_to_rgb,
+  hslaToRgb,
+  hsla_to_rgb,
+  rgbToHsla,
+  rgb_to_hsla
 } from "./conversions.js";
 import {
-  calculateContrastRatio,
   calculateRelativeLuminance,
+  calculate_relative_luminance,
+  calculateContrastRatio,
+  calculate_contrast_ratio,
   getContrastLevel,
-  getWcagLevel
+  get_contrast_level,
+  getWcagLevel,
+  get_wcag_level
 } from "./contrast.js";
-import { calculateDeltaE2000 } from "./colorMetrics.js";
-import { checkAndFixContrast } from "./optimisation.js";
+import {
+  calculateDeltaE2000,
+  calculate_delta_e_2000,
+  deltaE
+} from "./colorMetrics.js";
+import {
+  binarySearchLightness,
+  binary_search_lightness,
+  gradientDescentOklch,
+  gradient_descent_oklch,
+  generateAccessibleColor,
+  generate_accessible_color,
+  checkAndFixContrast,
+  check_and_fix_contrast,
+  _strategy_strict,
+  _strategy_recursive,
+  _strategy_relaxed
+} from "./optimisation.js";
+import {
+  toConsole,
+  to_console,
+  toHtml,
+  to_html,
+  toHtmlBulk,
+  to_html_bulk,
+  _get_level_badge
+} from "./visualiser.js";
 
-export class Color {
-  constructor(input) {
-    this.raw = input;
-    try {
-      this.rgb = parseColor(input);
-      this.isValid = true;
-      this.error = null;
-    } catch (err) {
-      this.rgb = null;
-      this.isValid = false;
-      this.error = err.message;
-    }
-  }
+export const version = "1.1.0";
+export const __version__ = "1.1.0";
 
-  get hex() {
-    return this.isValid ? rgbToHex(this.rgb) : null;
-  }
+// Re-exports
+export {
+  Color,
+  ColorPair,
+  makeReadableBulk,
+  make_readable_bulk,
+  CSS_NAMED_COLORS,
+  parseColorToRgb,
+  parse_color_to_rgb,
+  detectColorFormat,
+  detect_color_format,
+  formatColor,
+  format_color,
+  srgbToLinear,
+  srgb_to_linear,
+  linearToSrgb,
+  linear_to_srgb,
+  rgbToLinear,
+  rgb_to_linear,
+  hexToRgb,
+  hex_to_rgb,
+  rgbToHex,
+  rgb_to_hex,
+  rgbToOklch,
+  rgb_to_oklch,
+  oklchToRgb,
+  oklch_to_rgb,
+  rgbToOklchSafe,
+  rgb_to_oklch_safe,
+  oklchToRgbSafe,
+  oklch_to_rgb_safe,
+  isValidRgb,
+  is_valid_rgb,
+  isValidOklch,
+  is_valid_oklch,
+  calculateHueAngle,
+  calculate_hue_angle,
+  rgbToXyz,
+  rgb_to_xyz,
+  xyzToLab,
+  xyz_to_lab,
+  rgbToLab,
+  rgb_to_lab,
+  rgbaToRgb,
+  rgba_to_rgb,
+  rgbintToString,
+  rgbint_to_string,
+  rgbToHsl,
+  rgb_to_hsl,
+  hslToRgb,
+  hsl_to_rgb,
+  hslaToRgb,
+  hsla_to_rgb,
+  rgbToHsla,
+  rgb_to_hsla,
+  calculateRelativeLuminance,
+  calculate_relative_luminance,
+  calculateContrastRatio,
+  calculate_contrast_ratio,
+  getContrastLevel,
+  get_contrast_level,
+  getWcagLevel,
+  get_wcag_level,
+  calculateDeltaE2000,
+  calculate_delta_e_2000,
+  deltaE,
+  binarySearchLightness,
+  binary_search_lightness,
+  gradientDescentOklch,
+  gradient_descent_oklch,
+  generateAccessibleColor,
+  generate_accessible_color,
+  checkAndFixContrast,
+  check_and_fix_contrast,
+  _strategy_strict,
+  _strategy_recursive,
+  _strategy_relaxed,
+  toConsole,
+  to_console,
+  toHtml,
+  to_html,
+  toHtmlBulk,
+  to_html_bulk,
+  _get_level_badge
+};
 
-  get luminance() {
-    return this.isValid ? calculateRelativeLuminance(this.rgb) : null;
-  }
-
-  get oklch() {
-    return this.isValid ? rgbToOklch(this.rgb) : null;
-  }
-
-  get lab() {
-    return this.isValid ? rgbToLab(this.rgb) : null;
-  }
-}
-
-export class ColorPair {
-  constructor(text, bg, large = false) {
-    this.text = new Color(text);
-    this.bg = new Color(bg);
-    this.large = large;
-  }
-
-  get isValid() {
-    return this.text.isValid && this.bg.isValid;
-  }
-
-  get contrast() {
-    if (!this.isValid) return null;
-    return calculateContrastRatio(this.text.rgb, this.bg.rgb);
-  }
-
-  get wcagLevel() {
-    if (!this.isValid) return "FAIL";
-    return getWcagLevel(this.text.rgb, this.bg.rgb, this.large);
-  }
-
-  get isReadable() {
-    const level = this.wcagLevel;
-    if (level === "AAA") return "very readable";
-    if (level === "AA") return "readable";
-    return "not readable";
-  }
-
-  makeReadable(options = {}) {
-    if (!this.isValid) {
-      throw new Error(`Invalid color pair: text=${this.text.error}, bg=${this.bg.error}`);
-    }
-    const mode = options.mode !== undefined ? options.mode : 1;
-    const veryReadable = options.veryReadable || false;
-    const opt = {
-      large: this.large,
-      mode: mode,
-      premium: veryReadable
-    };
-    const res = checkAndFixContrast(this.text.raw, this.bg.raw, opt);
-    return [res.tunedColor, res.success];
-  }
-
-  make_readable(options = {}) {
-    return this.makeReadable(options);
-  }
-}
-
-export const make_readable = makeReadable;
-
+/**
+ * Top-level convenience function: fix a single color pair to make it readable.
+ */
 export function makeReadable(textColor, bgColor, options = {}) {
-  const pair = new ColorPair(textColor, bgColor, options.large || false);
-  const result = checkAndFixContrast(textColor, bgColor, options);
+  const large = options.large || false;
+  const pair = new ColorPair(textColor, bgColor, large);
+  const [fixedColor, success] = pair.makeReadable(options);
   return {
-    color: result.tunedColor,
-    tunedRgb: result.tunedRgb,
-    success: result.success,
-    originalContrast: Number(result.originalContrast.toFixed(2)),
-    finalContrast: Number(result.finalContrast.toFixed(2)),
-    deltaE: Number(result.deltaE.toFixed(2)),
-    wcagLevel: result.wcagLevel,
-    isReadable: result.wcagLevel !== "FAIL"
+    fixedColor,
+    success,
+    isReadable: pair.isReadable,
+    pair
   };
 }
 
-export function getContrast(textColor, bgColor) {
-  const textRgb = parseColor(textColor);
-  const bgRgb = parseColor(bgColor);
-  return Number(calculateContrastRatio(textRgb, bgRgb).toFixed(2));
-}
+export const make_readable = makeReadable;
+export const getContrast = calculateContrastRatio;
+export const getContrastRatio = calculateContrastRatio;
 
-export function deltaE(color1, color2) {
-  const rgb1 = parseColor(color1);
-  const rgb2 = parseColor(color2);
-  return Number(calculateDeltaE2000(rgb1, rgb2).toFixed(2));
-}
-
-export {
-  parseColor,
+export default {
+  version,
+  __version__,
+  Color,
+  ColorPair,
+  makeReadableBulk,
+  make_readable_bulk,
+  makeReadable,
+  make_readable,
+  CSS_NAMED_COLORS,
   hexToRgb,
   rgbToHex,
   rgbToOklch,
   oklchToRgb,
+  rgbToXyz,
+  xyzToLab,
   rgbToLab,
-  calculateHueAngle,
+  rgbToHsl,
+  hslToRgb,
+  hslaToRgb,
+  rgbToHsla,
+  rgbaToRgb,
+  rgbintToString,
+  parseColorToRgb,
+  detectColorFormat,
+  formatColor,
   calculateRelativeLuminance,
   calculateContrastRatio,
   getContrastLevel,
   getWcagLevel,
   calculateDeltaE2000,
-  checkAndFixContrast
-};
-
-export default {
-  Color,
-  ColorPair,
-  makeReadable,
-  getContrast,
-  getWcagLevel,
   deltaE,
-  calculateContrastRatio,
-  calculateDeltaE2000,
-  parseColor,
-  hexToRgb,
-  rgbToHex,
-  rgbToOklch,
-  oklchToRgb
+  binarySearchLightness,
+  gradientDescentOklch,
+  generateAccessibleColor,
+  checkAndFixContrast,
+  toConsole,
+  toHtml,
+  toHtmlBulk
 };

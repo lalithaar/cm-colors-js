@@ -1,22 +1,28 @@
 /**
  * CM-Colors JS - Optimization & Accessibility Tuning Engine
- * Port of cm_colors core optimization algorithms.
+ * Complete 100% parity with Python cm_colors.core.optimisation.
  */
 
 import {
-  rgbToOklch,
-  oklchToRgb,
+  rgbToOklchSafe,
+  oklchToRgbSafe,
   isValidRgb,
-  parseColor,
-  rgbToHex
+  rgbintToString
 } from "./conversions.js";
 import { calculateContrastRatio, getWcagLevel } from "./contrast.js";
 import { calculateDeltaE2000 } from "./colorMetrics.js";
+import { parseColorToRgb } from "./colorParser.js";
 
-export function binarySearchLightness(textRgb, bgRgb, deltaEThreshold = 2.0, targetContrast = 7.0, largeText = false) {
+export function binarySearchLightness(
+  textRgb,
+  bgRgb,
+  deltaEThreshold = 2.0,
+  targetContrast = 7.0,
+  largeText = false
+) {
   try {
-    const [l, c, h] = rgbToOklch(textRgb);
-    const [bgL] = rgbToOklch(bgRgb);
+    const [l, c, h] = rgbToOklchSafe(textRgb);
+    const [bgL] = rgbToOklchSafe(bgRgb);
     const searchUp = bgL < 0.5; // Lighten text on dark bg, darken on light bg
 
     let low = searchUp ? l : 0.0;
@@ -29,7 +35,7 @@ export function binarySearchLightness(textRgb, bgRgb, deltaEThreshold = 2.0, tar
     for (let i = 0; i < 20; i++) {
       const mid = (low + high) / 2.0;
       const candidateOklch = [mid, c, h];
-      const candidateRgb = oklchToRgb(candidateOklch);
+      const candidateRgb = oklchToRgbSafe(candidateOklch);
 
       if (!isValidRgb(candidateRgb)) {
         if (searchUp) high = mid;
@@ -71,18 +77,26 @@ export function binarySearchLightness(textRgb, bgRgb, deltaEThreshold = 2.0, tar
   }
 }
 
-export function gradientDescentOklch(textRgb, bgRgb, deltaEThreshold = 2.0, targetContrast = 7.0, largeText = false, maxIter = 50) {
+export function gradientDescentOklch(
+  textRgb,
+  bgRgb,
+  deltaEThreshold = 2.0,
+  targetContrast = 7.0,
+  largeText = false,
+  maxIter = 50
+) {
   try {
-    const [l, c, h] = rgbToOklch(textRgb);
-    let learningRate = 0.02;
+    const [l, c, h] = rgbToOklchSafe(textRgb);
+    const learningRate = 0.02;
     let current = [l, c];
 
     function costFunction(params) {
-      const newL = Math.max(0.0, Math.min(1.0, params[0]));
-      const newC = Math.max(0.0, Math.min(0.5, params[1]));
+      let [newL, newC] = params;
+      newL = Math.max(0.0, Math.min(1.0, newL));
+      newC = Math.max(0.0, Math.min(0.5, newC));
 
       const candidateOklch = [newL, newC, h];
-      const candidateRgb = oklchToRgb(candidateOklch);
+      const candidateRgb = oklchToRgbSafe(candidateOklch);
 
       if (!isValidRgb(candidateRgb)) return 1e6;
 
@@ -126,7 +140,9 @@ export function gradientDescentOklch(textRgb, bgRgb, deltaEThreshold = 2.0, targ
       current = nextParams;
     }
 
-    const finalRgb = oklchToRgb([current[0], current[1], h]);
+    const finalOklch = [current[0], current[1], h];
+    const finalRgb = oklchToRgbSafe(finalOklch);
+
     if (isValidRgb(finalRgb)) {
       const finalDeltaE = calculateDeltaE2000(textRgb, finalRgb);
       if (finalDeltaE <= deltaEThreshold) {
@@ -214,13 +230,14 @@ export function generateAccessibleColor(
   return bestCandidate ? bestCandidate : textRgb;
 }
 
-export function strategyStrict(textRgb, bgRgb, large, targetContrast, minContrast) {
+export function _strategy_strict(textRgb, bgRgb, large, targetContrast, minContrast) {
   const tunedRgb = generateAccessibleColor(textRgb, bgRgb, large, targetContrast, minContrast);
   const finalContrast = calculateContrastRatio(tunedRgb, bgRgb);
-  return { tunedRgb, success: finalContrast >= minContrast };
+  const success = finalContrast >= minContrast;
+  return [tunedRgb, success];
 }
 
-export function strategyRecursive(textRgb, bgRgb, large, targetContrast, minContrast) {
+export function _strategy_recursive(textRgb, bgRgb, large, targetContrast, minContrast) {
   let currentRgb = textRgb;
   const maxIterations = 10;
   const strictSequence = [0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.5, 2.8, 3.0];
@@ -228,7 +245,7 @@ export function strategyRecursive(textRgb, bgRgb, large, targetContrast, minCont
   for (let i = 0; i < maxIterations; i++) {
     const currentContrast = calculateContrastRatio(currentRgb, bgRgb);
     if (currentContrast >= minContrast) {
-      return { tunedRgb: currentRgb, success: true };
+      return [currentRgb, true];
     }
 
     const nextRgb = generateAccessibleColor(
@@ -242,35 +259,44 @@ export function strategyRecursive(textRgb, bgRgb, large, targetContrast, minCont
 
     if (nextRgb[0] === currentRgb[0] && nextRgb[1] === currentRgb[1] && nextRgb[2] === currentRgb[2]) {
       if (calculateContrastRatio(nextRgb, bgRgb) >= minContrast) {
-        return { tunedRgb: nextRgb, success: true };
+        return [nextRgb, true];
+      } else {
+        return [nextRgb, false];
       }
-      return { tunedRgb: nextRgb, success: false };
     }
 
     currentRgb = nextRgb;
     if (calculateContrastRatio(currentRgb, bgRgb) >= minContrast) {
-      return { tunedRgb: currentRgb, success: true };
+      return [currentRgb, true];
     }
   }
 
-  return { tunedRgb: currentRgb, success: false };
+  return [currentRgb, false];
 }
 
-export function strategyRelaxed(textRgb, bgRgb, large, targetContrast, minContrast) {
-  const rec = strategyRecursive(textRgb, bgRgb, large, targetContrast, minContrast);
-  if (rec.success) return rec;
+export function _strategy_relaxed(textRgb, bgRgb, large, targetContrast, minContrast) {
+  const [recRgb, recSuccess] = _strategy_recursive(textRgb, bgRgb, large, targetContrast, minContrast);
+  if (recSuccess) return [recRgb, true];
 
   // Option A: Extended iterations
   let optARgb = textRgb;
   let optASuccess = false;
+  const maxIterationsExtended = 15;
   const strictSequence = [0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.5, 2.8, 3.0];
 
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < maxIterationsExtended; i++) {
     if (calculateContrastRatio(optARgb, bgRgb) >= minContrast) {
       optASuccess = true;
       break;
     }
-    const nextRgb = generateAccessibleColor(optARgb, bgRgb, large, targetContrast, minContrast, strictSequence);
+    const nextRgb = generateAccessibleColor(
+      optARgb,
+      bgRgb,
+      large,
+      targetContrast,
+      minContrast,
+      strictSequence
+    );
     if (nextRgb[0] === optARgb[0] && nextRgb[1] === optARgb[1] && nextRgb[2] === optARgb[2]) {
       if (calculateContrastRatio(nextRgb, bgRgb) >= minContrast) optASuccess = true;
       break;
@@ -282,76 +308,85 @@ export function strategyRelaxed(textRgb, bgRgb, large, targetContrast, minContra
     }
   }
 
-  // Option B: Delta E relaxation up to 15.0
+  // Option B: Relaxed Delta E sequence
   const relaxedSequence = [
     0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.5, 3.0, 3.5, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 12.0, 15.0
   ];
-  const optBRgb = generateAccessibleColor(textRgb, bgRgb, large, targetContrast, minContrast, relaxedSequence);
+  const optBRgb = generateAccessibleColor(
+    textRgb,
+    bgRgb,
+    large,
+    targetContrast,
+    minContrast,
+    relaxedSequence
+  );
   const optBSuccess = calculateContrastRatio(optBRgb, bgRgb) >= minContrast;
 
   if (optASuccess && optBSuccess) {
     const deltaA = calculateDeltaE2000(textRgb, optARgb);
     const deltaB = calculateDeltaE2000(textRgb, optBRgb);
-    return deltaA <= deltaB ? { tunedRgb: optARgb, success: true } : { tunedRgb: optBRgb, success: true };
+    return deltaA <= deltaB ? [optARgb, true] : [optBRgb, true];
   } else if (optASuccess) {
-    return { tunedRgb: optARgb, success: true };
+    return [optARgb, true];
   } else if (optBSuccess) {
-    return { tunedRgb: optBRgb, success: true };
+    return [optBRgb, true];
+  } else {
+    return [recRgb, false];
   }
-  return { tunedRgb: rec.tunedRgb, success: false };
 }
 
-export function checkAndFixContrast(text, bg, options = {}) {
-  const large = options.large || false;
-  const mode = options.mode !== undefined ? options.mode : 1;
-  const premium = options.premium || false;
+export function checkAndFixContrast(text, bg, large = false, mode = 1, premium = false) {
+  // Support both checkAndFixContrast(text, bg, large, mode, premium) and options object
+  if (typeof large === "object" && large !== null) {
+    const opts = large;
+    large = opts.large || false;
+    mode = opts.mode !== undefined ? opts.mode : 1;
+    premium = opts.premium || opts.veryReadable || opts.very_readable || false;
+  }
 
-  const textRgb = parseColor(text);
-  const bgRgb = parseColor(bg);
+  const textRgb = parseColorToRgb(text);
+  const bgRgb = parseColorToRgb(bg);
 
   const currentContrast = calculateContrastRatio(textRgb, bgRgb);
 
   let minContrast, targetContrast;
   if (premium) {
-    minContrast = large ? 4.5 : 7.0;
-    targetContrast = minContrast;
+    if (large) {
+      minContrast = 4.5;
+      targetContrast = 4.5;
+    } else {
+      minContrast = 7.0;
+      targetContrast = 7.0;
+    }
   } else {
-    minContrast = large ? 3.0 : 4.5;
-    targetContrast = large ? 4.5 : 7.0;
+    if (large) {
+      minContrast = 3.0;
+      targetContrast = 4.5;
+    } else {
+      minContrast = 4.5;
+      targetContrast = 7.0;
+    }
   }
 
   if (currentContrast >= minContrast) {
-    return {
-      tunedColor: typeof text === "string" ? text : rgbToHex(textRgb),
-      tunedRgb: textRgb,
-      success: true,
-      originalContrast: currentContrast,
-      finalContrast: currentContrast,
-      deltaE: 0.0,
-      wcagLevel: getWcagLevel(textRgb, bgRgb, large)
-    };
+    return [rgbintToString(textRgb), true];
   }
 
-  let result;
+  let tunedRgb, success;
   if (mode === 0) {
-    result = strategyStrict(textRgb, bgRgb, large, targetContrast, minContrast);
+    [tunedRgb, success] = _strategy_strict(textRgb, bgRgb, large, targetContrast, minContrast);
   } else if (mode === 2) {
-    result = strategyRelaxed(textRgb, bgRgb, large, targetContrast, minContrast);
+    [tunedRgb, success] = _strategy_relaxed(textRgb, bgRgb, large, targetContrast, minContrast);
   } else {
-    result = strategyRecursive(textRgb, bgRgb, large, targetContrast, minContrast);
+    [tunedRgb, success] = _strategy_recursive(textRgb, bgRgb, large, targetContrast, minContrast);
   }
 
-  const finalContrast = calculateContrastRatio(result.tunedRgb, bgRgb);
-  const deltaE = calculateDeltaE2000(textRgb, result.tunedRgb);
-  const wcagLevel = getWcagLevel(result.tunedRgb, bgRgb, large);
-
-  return {
-    tunedColor: rgbToHex(result.tunedRgb),
-    tunedRgb: result.tunedRgb,
-    success: result.success,
-    originalContrast: currentContrast,
-    finalContrast: finalContrast,
-    deltaE: deltaE,
-    wcagLevel: wcagLevel
-  };
+  const accessibleTextStr = rgbintToString(tunedRgb);
+  return [accessibleTextStr, success];
 }
+
+// Snake-case aliases
+export const binary_search_lightness = binarySearchLightness;
+export const gradient_descent_oklch = gradientDescentOklch;
+export const generate_accessible_color = generateAccessibleColor;
+export const check_and_fix_contrast = checkAndFixContrast;

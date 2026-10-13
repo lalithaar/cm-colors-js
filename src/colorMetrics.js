@@ -1,6 +1,7 @@
 /**
  * CM-Colors JS - CIEDE2000 Color Difference Metric
  * Full mathematical rigor matching CIEDE2000 specification.
+ * Complete parity with Python cm_colors.core.color_metrics.
  */
 
 import { rgbToLab, calculateHueAngle } from "./conversions.js";
@@ -86,3 +87,7 @@ export function calculateDeltaE2000(rgb1, rgb2) {
 
   return deltaE;
 }
+
+// Aliases
+export const calculate_delta_e_2000 = calculateDeltaE2000;
+export const deltaE = calculateDeltaE2000;
